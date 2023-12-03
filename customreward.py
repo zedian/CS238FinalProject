@@ -1,16 +1,18 @@
-from toxicity.reddit_comments_base import RedditData
-from utils.misc import convert_path
-from toxicity.toxicity_env import ToxicityEnvironment
-from toxicity.reward_fs import toxicity_reward, score_human_reward
+import random
 
-# reward_f = score_human_reward(
-#    reddit_path=convert_path('Implicit-Language-Q-Learning/data/reddit_comments/'),
-#    indexes=None
-# )
-
-# reward_f
-
+from typing import List
+from collections import defaultdict
 from commonsense_data import CommonsenseData
 
-data = CommonsenseData("Implicit-Language-Q-Learning/data/commonsense/")
-data[0]
+def deterministic_reward(reddit_path: str, indexes: List[int]):
+    data = CommonsenseData("Implicit-Language-Q-Learning/data/commonsense/")
+    data_index = defaultdict(list)
+
+    # TODO: there is likely only 1 value per key
+    for idx, ((_, _, c), r) in enumerate(data):
+        data_index[c].append(r)
+    def _deterministic_reward(text: str):
+        if text in data_index:
+            return 2 * float(random.choice(data_index[text]) > 0) - 1
+        raise NotImplementedError
+    return _deterministic_reward
