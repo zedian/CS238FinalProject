@@ -7,6 +7,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
+original_df = pd.read_csv('output_dialogues_all.csv')
+
 embeddings_df = pd.read_csv('embeddings.csv')
 labels_df = pd.read_csv('output_dialogues_all.csv')['label']
 
@@ -22,7 +24,7 @@ class CustomEnv(gym.Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(embeddings.shape[1],), dtype=np.float32)
         self.current_index = 0
         self.step_count = 0
-        self.max_steps = len(self.embeddings) * 2 
+        self.max_steps = len(self.embeddings) * 4 # Increase the number of steps per episode
 
     def reset(self):
         self.current_index = np.random.randint(0, len(self.embeddings))
@@ -35,8 +37,6 @@ class CustomEnv(gym.Env):
         reward = self.reward_function(action, label)
         self.current_index = np.random.randint(0, len(self.embeddings))
         done = self.step_count >= self.max_steps
-        # Debugging log
-        #print(f"Step: {self.step_count}/{self.max_steps}, action={action}, label={label}, reward={reward}, new_index={self.current_index}, done={done}")
         return self.embeddings[self.current_index], reward, done, {}
 
     def render(self, mode='human'):
@@ -50,7 +50,7 @@ env = DummyVecEnv([lambda: env])
 
 model = PPO("MlpPolicy", env, verbose=1)
 
-total_timesteps = 10000
+total_timesteps = 20000 
 
 with tqdm(total=total_timesteps, desc="Training progress") as pbar:
     steps_completed = 0
@@ -75,3 +75,5 @@ for _ in range(num_episodes):
 
 average_reward = total_rewards / num_episodes
 print(f"avg reward over {num_episodes} episodes: {average_reward}")
+
+model.save("ppo_model2.zip")
